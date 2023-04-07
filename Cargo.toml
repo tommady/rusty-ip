@@ -12,3 +12,7 @@ glue your dynamic IP to your domain always!
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+env_logger = { version = "0.10", default-features = false, features = ["humantime"] }
+log = "0.4"
+ctrlc = { version = "3.2", features = ["termination"] }
+ureq = { version = "2.6", default-features = false, features = ["tls"] }
