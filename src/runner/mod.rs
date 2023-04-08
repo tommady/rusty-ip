@@ -3,6 +3,7 @@ mod google;
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
+        mpsc::{sync_channel, SyncSender},
         Arc, Condvar, Mutex,
     },
     thread,
@@ -16,6 +17,8 @@ use log::error;
 pub(crate) struct Runner {
     runners: Vec<Option<thread::JoinHandle<()>>>,
     done: Arc<AtomicBool>,
+    done_notify: Arc<(Mutex<String>, Condvar)>,
+    done_sleep: SyncSender<bool>,
 }
 
 impl Runner {
@@ -25,6 +28,8 @@ impl Runner {
         let original_ip = String::new();
         let rx_notify = Arc::new((Mutex::new(original_ip), Condvar::new()));
         let tx_notify = rx_notify.clone();
+        let done_notify = tx_notify.clone();
+        let (done_sleep, sleep) = sync_channel::<bool>(1);
 
         // spawn a ticker crawler to get the current ip
         let freq = Duration::from_secs(cfg.check_interval_sec);
@@ -50,7 +55,7 @@ impl Runner {
                     }
                 }
 
-                thread::sleep(freq);
+                let _ = sleep.recv_timeout(freq);
             }
         })));
 
@@ -78,11 +83,21 @@ impl Runner {
             })))
         }
 
-        Runner { runners, done }
+        Runner {
+            runners,
+            done,
+            done_notify,
+            done_sleep,
+        }
     }
 
     pub(crate) fn close(&mut self) {
         self.done.store(true, Ordering::SeqCst);
+        let _ = self.done_sleep.send(true);
+
+        let (_, cvar) = &*self.done_notify;
+        cvar.notify_all();
+
         for runner in self.runners.iter_mut() {
             if let Some(w) = runner.take() {
                 let _ = w.join();
