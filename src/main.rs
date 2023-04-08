@@ -1,7 +1,7 @@
 mod config;
 mod runner;
 
-use std::{env, path::Path};
+use std::{env, path::Path, sync::mpsc::sync_channel};
 
 use log::info;
 
@@ -19,12 +19,16 @@ fn main() {
 fn run(cfg_path: &str) {
     let cfg = config::read_config(Path::new(cfg_path)).expect("read config failed");
     let mut runner = runner::Runner::new(&cfg);
+    let (tx, rx) = sync_channel(1);
 
     ctrlc::set_handler(move || {
         info!("received exit signal");
         runner.close();
+        tx.send(true).expect("tx send failed")
     })
     .expect("setting Ctrl-C handler failed");
+
+    let _ = rx.recv().expect("rx recv failed");
 }
 
 fn print_help() {
