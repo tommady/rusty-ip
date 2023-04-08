@@ -13,7 +13,6 @@ pub(crate) struct Config {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(untagged)]
 pub(crate) enum Runner {
     Google {
         hostname: String,
