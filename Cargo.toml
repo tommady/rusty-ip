@@ -16,3 +16,5 @@ env_logger = { version = "0.10", default-features = false, features = ["humantim
 log = "0.4"
 ctrlc = { version = "3.2", features = ["termination"] }
 ureq = { version = "2.6", default-features = false, features = ["tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
