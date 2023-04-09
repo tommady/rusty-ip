@@ -13,7 +13,6 @@ COPY . ./app
 WORKDIR /app
 RUN cargo build --release --target $(cat /rust_targets)
 RUN cp target/$(cat /rust_targets)/release/rusty-ip ./
-RUN strip --strip-all ./rusty-ip
 
 FROM docker.io/busybox:latest
 
